@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="slides-format" content="viewport" />
+  <title>Social Media Analytics Framework</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style type="text/tailwindcss">
+    @theme {
+      --color-bg: #0f172a;
+      --color-bg-deep: #020617;
+      --color-surface: #162033;
+      --color-text: #f8fafc;
+      --color-text-secondary: #cbd5e1;
+      --color-text-muted: #94a3b8;
+      --color-accent-1: #7c3aed;
+      --color-accent-2: #06b6d4;
+      --color-accent-3: #f97316;
+      --color-glass-bg: rgba(255,255,255,0.06);
+      --color-glass-border: rgba(255,255,255,0.09);
+      --color-vignette: rgba(0,0,0,0.4);
+      --font-display: 'Instrument Serif', Georgia, serif;
+      --font-body: 'Inter', sans-serif;
+    }
+  </style>
+  <style>
+    :root { --color-bg: #0f172a; --color-text: #f8fafc; --glow-color-rgb: 124,58,237; }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { background: var(--color-bg); margin: 0; }
+    body { font-family: 'Inter', sans-serif; color: var(--color-text); overflow: hidden; height: 100vh; width: 100vw; }
+    .deck { width: 100vw; height: 100vh; position: relative; }
+    .slide { position: absolute; inset: 0; background: var(--color-bg); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transform: scale(.95); transition: opacity .7s ease, transform .7s ease; pointer-events: none; overflow: hidden; }
+    .slide.active { opacity: 1; transform: scale(1); pointer-events: all; }
+    .slide > .content { position: relative; z-index: 2; width: 100%; max-width: 1160px; padding: clamp(1.5rem, 4vw, 4rem); }
+    .nav-controls { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; z-index: 100; background: rgba(255,255,255,0.06); backdrop-filter: blur(10px); padding: 10px 24px; border-radius: 40px; border: 1px solid rgba(255,255,255,0.08); }
+    .nav-btn { width: 40px; height: 40px; border: none; background: rgba(255,255,255,0.06); color: #7c3aed; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .slide-dots { display: flex; gap: 8px; }
+    .slide-dots .dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.12); cursor: pointer; transition: background .3s, transform .3s; }
+    .slide-dots .dot.active { background: #7c3aed; transform: scale(1.25); }
+    .slide-counter { font-size: .8rem; color: #94a3b8; min-width: 48px; text-align: center; }
+    .reveal { opacity: 0; transform: translateY(20px); }
+    @keyframes float-slow { 0% { transform: translate(0,0) scale(1);} 25% { transform: translate(60px,-50px) scale(1.12);} 50% { transform: translate(-40px,40px) scale(.9);} 75% { transform: translate(50px,20px) scale(1.08);} 100% { transform: translate(0,0) scale(1);} }
+    @keyframes float-drift { 0% { transform: translate(0,0) scale(1) rotate(0deg);} 33% { transform: translate(-50px,-60px) scale(1.15) rotate(3deg);} 66% { transform: translate(40px,30px) scale(.88) rotate(-2deg);} 100% { transform: translate(0,0) scale(1) rotate(0deg);} }
+    @keyframes float { 0%,100% { transform: translateY(0);} 50% { transform: translateY(-15px);} }
+    .gradient-mesh { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+    .blob { position: absolute; border-radius: 50%; filter: blur(80px); animation: float-slow 12s ease-in-out infinite; }
+    .blob:nth-child(2) { animation: float-drift 16s ease-in-out infinite; }
+    .blob:nth-child(3) { animation: float-slow 20s ease-in-out infinite reverse; }
+    .slide::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); background-repeat: repeat; background-size: 256px 256px; opacity: 0.03; mix-blend-mode: overlay; }
+    .slide::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.4) 100%); }
+    .mouse-spotlight { position: fixed; inset: 0; z-index: 99; pointer-events: none; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,.22); }
+  </style>
+</head>
+<body>
+<div class="mouse-spotlight"></div>
+<div class="deck">
+
+  <div class="slide slide-1 active" data-slide="1">
+    <div class="gradient-mesh">
+      <div class="blob" style="width:500px;height:500px;top:-120px;right:-80px;background:var(--color-accent-1);opacity:.16"></div>
+      <div class="blob" style="width:320px;height:320px;bottom:-80px;left:-40px;background:var(--color-accent-2);opacity:.12"></div>
+      <div class="blob" style="width:220px;height:220px;top:42%;left:16%;background:var(--color-accent-3);opacity:.10"></div>
+    </div>
+    <canvas class="particle-canvas" style="position:absolute;inset:0;z-index:1"></canvas>
+    <div class="content text-center">
+      <div class="text-[110px] mb-5 animate-[float_3s_ease-in-out_infinite] reveal">📊</div>
+      <h1 class="font-display text-[clamp(2.8rem,6vw,5.4rem)] font-black bg-linear-to-br from-accent-1 via-accent-2 to-accent-3 bg-clip-text text-transparent tracking-tight mb-4 reveal">Social Media Analytics Framework</h1>
+    </div>
+  </div>
+
+  <div class="slide slide-2" data-slide="2">
+    <div class="gradient-mesh">
+      <div class="blob" style="width:360px;height:360px;top:-80px;right:-70px;background:var(--color-accent-1);opacity:.08"></div>
+      <div class="blob" style="width:260px;height:260px;bottom:-70px;left:-40px;background:var(--color-accent-2);opacity:.06"></div>
+    </div>
+    <div class="content">
+      <h2 class="font-display text-[clamp(2rem,4vw,3.1rem)] font-bold mb-8 reveal">Agenda</h2>
+      <div class="grid grid-cols-2 gap-6">
+        <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-6 reveal"><div class="text-accent-2 text-sm uppercase tracking-[.18em] mb-2">01</div><div class="text-2xl font-semibold mb-2">Why analytics matters</div><div class="text-text-secondary">How social data supports strategy, content planning, and brand decisions.</div></div>
+        <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-6 reveal"><div class="text-accent-2 text-sm uppercase tracking-[.18em] mb-2">02</div><div class="text-2xl font-semibold mb-2">Three core pillars</div><div class="text-text-secondary">Performance, Listening, and Reporting as one connected framework.</div></div>
+        <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-6 reveal"><div class="text-accent-2 text-sm uppercase tracking-[.18em] mb-2">03</div><div class="text-2xl font-semibold mb-2">Metrics and tools</div><div class="text-text-secondary">What to measure, how to collect it, and when to automate versus review manually.</div></div>
+        <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-6 reveal"><div class="text-accent-2 text-sm uppercase tracking-[.18em] mb-2">04</div><div class="text-2xl font-semibold mb-2">Deck structure and role</div><div class="text-text-secondary">How analysts turn raw data into a monthly story and action plan.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide slide-3" data-slide="3">
+    <div class="gradient-mesh">
+      <div class="blob" style="width:390px;height:390px;top:-90px;right:-80px;background:var(--color-accent-3);opacity:.12"></div>
+      <div class="blob" style="width:280px;height:280px;bottom:-80px;left:-50px;background:var(--color-accent-1);opacity:.08"></div>
+    </div>
+    <div class="content">
+      <p class="uppercase tracking-[.25em] text-text-muted mb-4 text-sm reveal">Why it matters</p>
+      <h2 class="font-display text-[clamp(2.1rem,4.8vw,4rem)] font-bold mb-8 reveal">What happens without social media analytics?</h2>
+      <div class="grid grid-cols-2 gap-6">
+        <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-7 reveal"><div class="text-2xl font-semibold mb-3">You cannot track performance clearly</div><div class="text-text-secondary text-lg">You do not know what content worked, what failed, what drove reach, or what improved engagement over time.</div></div>
+        <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-7 reveal"><div class="text-2xl font-semibold mb-3">You do not know what people are saying</div><div class="text-text-secondary text-lg">Without listening, you miss how audiences perceive your brand, products, service quality, and campaign messaging.</div></div>
+        <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-7 reveal"><div class="text-2xl font-semibold mb-3">You cannot explain problems early</div><div class="text-text-secondary text-lg">If a product or service goes wrong, you cannot easily identify where the drop happened or what sentiment changed.</div></div>
+        <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-7 reveal"><div class="text-2xl font-semibold mb-3">You lose decision confidence</div><div class="text-text-secondary text-lg">Teams start guessing instead of using evidence to improve strategy, content, and community decisions.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide slide-4" data-slide="4">
+    <div class="gradient-mesh"><div class="blob" style="width:420px;height:420px;top:-100px;right:-60px;background:var(--color-accent-1);opacity:.10"></div><div class="blob" style="width:300px;height:300px;bottom:-100px;left:-60px;background:var(--color-accent-3);opacity:.08"></div></div>
+    <canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1"></canvas>
+    <div class="content text-center">
+      <p class="uppercase tracking-[.25em] text-text-muted mb-4 text-sm reveal">Framework Core</p>
+      <h2 class="font-display text-[clamp(2.2rem,5vw,4.4rem)] font-bold mb-10 reveal">The Three Pillars</h2>
+      <div class="grid grid-cols-3 gap-6">
+        <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-8 card-hover transition reveal"><div class="text-5xl mb-4">📈</div><div class="text-2xl font-bold mb-3">Performance</div><div class="text-text-secondary">Measures how the brand’s owned channels and content perform over time.</div></div>
+        <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-8 card-hover transition reveal"><div class="text-5xl mb-4">🎧</div><div class="text-2xl font-bold mb-3">Listening</div><div class="text-text-secondary">Analyzes what audiences say about the brand, products, and category online.</div></div>
+        <div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-8 card-hover transition reveal"><div class="text-5xl mb-4">🧭</div><div class="text-2xl font-bold mb-3">Reporting</div><div class="text-text-secondary">Turns data into a clear story with context, conclusions, and next actions.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide slide-5" data-slide="5"><div class="gradient-mesh"><div class="blob" style="width:340px;height:340px;top:-70px;right:-70px;background:var(--color-accent-1);opacity:.08"></div><div class="blob" style="width:240px;height:240px;bottom:-60px;left:-40px;background:var(--color-accent-2);opacity:.06"></div></div><div class="content"><h2 class="font-display text-[clamp(2rem,4vw,3rem)] font-bold mb-6 reveal">Pillar 1: Performance</h2><div class="grid grid-cols-2 gap-8 items-start"><div class="reveal"><p class="text-xl text-text-secondary leading-relaxed mb-5">Performance shows how social accounts behave during a reporting period and whether content delivered against its intended objective.</p><ul class="space-y-4 text-lg text-text-secondary"><li class="reveal">• Measures traction across reach, engagement, growth, and content efficiency.</li><li class="reveal">• Tests whether audience interaction reflected campaign or content goals.</li><li class="reveal">• Reveals how the brand is presenting itself through platform behavior and content choices.</li><li class="reveal">• Creates the foundation for benchmarks and future recommendations.</li></ul></div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-7 reveal"><div class="text-sm uppercase tracking-[.18em] text-accent-2 mb-4">Core Questions</div><div class="space-y-4 text-lg"><div class="border-l-4 border-accent-1 pl-4 reveal">Did the content achieve its intended objective?</div><div class="border-l-4 border-accent-2 pl-4 reveal">Which formats and pillars generated the strongest response?</div><div class="border-l-4 border-accent-3 pl-4 reveal">How did results shift versus prior periods or benchmarks?</div></div></div></div></div></div>
+
+  <div class="slide slide-6" data-slide="6"><div class="gradient-mesh"><div class="blob" style="width:360px;height:360px;top:-80px;left:-60px;background:var(--color-accent-3);opacity:.07"></div><div class="blob" style="width:260px;height:260px;bottom:-60px;right:-50px;background:var(--color-accent-2);opacity:.06"></div></div><div class="content"><h2 class="font-display text-[clamp(2rem,4vw,3rem)] font-bold mb-6 reveal">Pillar 2: Listening</h2><div class="grid grid-cols-2 gap-8"><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-7 reveal"><div class="text-sm uppercase tracking-[.18em] text-accent-2 mb-4">What it does</div><p class="text-lg text-text-secondary leading-relaxed">Listening captures online conversations, keywords, and mentions to understand perception, recurring themes, and sentiment momentum around the brand.</p></div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-7 reveal"><div class="text-sm uppercase tracking-[.18em] text-accent-2 mb-4">Sentiment model</div><div class="grid grid-cols-3 gap-4 mt-4"><div class="rounded-2xl bg-[rgba(34,197,94,.14)] border border-[rgba(34,197,94,.28)] p-4 text-center reveal"><div class="text-3xl mb-2">😊</div><div class="font-semibold">Positive</div></div><div class="rounded-2xl bg-[rgba(148,163,184,.14)] border border-[rgba(148,163,184,.28)] p-4 text-center reveal"><div class="text-3xl mb-2">😐</div><div class="font-semibold">Neutral</div></div><div class="rounded-2xl bg-[rgba(239,68,68,.14)] border border-[rgba(239,68,68,.28)] p-4 text-center reveal"><div class="text-3xl mb-2">☹️</div><div class="font-semibold">Negative</div></div></div></div></div><div class="grid grid-cols-4 gap-4 mt-6"><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-5 reveal">Themes: product, service, pricing, campaigns</div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-5 reveal">Sources: X, comments, forums, news</div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-5 reveal">Method: automated NLP + manual review</div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-5 reveal">Output: perception insights and risks</div></div></div></div>
+
+  <div class="slide slide-7" data-slide="7"><div class="gradient-mesh"><div class="blob" style="width:330px;height:330px;top:-60px;right:-60px;background:var(--color-accent-1);opacity:.08"></div><div class="blob" style="width:250px;height:250px;bottom:-60px;left:-30px;background:var(--color-accent-2);opacity:.06"></div></div><div class="content"><h2 class="font-display text-[clamp(2rem,4vw,3rem)] font-bold mb-6 reveal">Pillar 3: Reporting</h2><div class="grid grid-cols-2 gap-8 items-center"><div><p class="text-xl text-text-secondary mb-6 reveal">Reporting combines performance and listening into a full story: what changed, why it changed, and what the brand should do next.</p><div class="space-y-4"><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-5 reveal"><span class="text-accent-2 font-semibold">What changed:</span> key shifts in metrics, volume, sentiment, and audience behavior.</div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-5 reveal"><span class="text-accent-2 font-semibold">Why it changed:</span> content mix, media support, timing, seasonality, competitors, or platform changes.</div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-5 reveal"><span class="text-accent-2 font-semibold">What to do next:</span> practical recommendations for content, targeting, cadence, and messaging.</div></div></div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-8 reveal"><div class="text-sm uppercase tracking-[.18em] text-accent-2 mb-4">Story formula</div><div class="text-4xl font-black mb-4">Data → Insight → Action</div><p class="text-text-secondary text-lg">A useful report does not stop at numbers. It explains what they mean and what should happen next.</p></div></div></div></div>
+
+  <div class="slide slide-8" data-slide="8"><div class="gradient-mesh"><div class="blob" style="width:400px;height:400px;top:-120px;right:-90px;background:var(--color-accent-1);opacity:.09"></div><div class="blob" style="width:280px;height:280px;bottom:-80px;left:-60px;background:var(--color-accent-3);opacity:.07"></div></div><div class="content"><h2 class="font-display text-[clamp(2rem,4vw,3rem)] font-bold mb-6 reveal">Core Metrics Checklist</h2><div class="grid grid-cols-3 gap-5"><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-6 reveal"><div class="text-accent-2 uppercase tracking-[.18em] text-sm mb-3">Growth</div><div class="text-xl font-semibold mb-2">Followers</div><div class="text-text-secondary">Followers growth, net additions, growth rate.</div></div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-6 reveal"><div class="text-accent-2 uppercase tracking-[.18em] text-sm mb-3">Exposure</div><div class="text-xl font-semibold mb-2">Reach & Impressions</div><div class="text-text-secondary">Unique audience reached and total views, including repeat exposure.</div></div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-6 reveal"><div class="text-accent-2 uppercase tracking-[.18em] text-sm mb-3">Interaction</div><div class="text-xl font-semibold mb-2">Engagements</div><div class="text-text-secondary">Likes, comments, shares, saves, clicks, replies, taps.</div></div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-6 reveal"><div class="text-accent-2 uppercase tracking-[.18em] text-sm mb-3">Efficiency</div><div class="text-xl font-semibold mb-2">Engagement Rate</div><div class="text-text-secondary">Engagement relative to reach or impressions.</div></div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-6 reveal"><div class="text-accent-2 uppercase tracking-[.18em] text-sm mb-3">Video</div><div class="text-xl font-semibold mb-2">Views & Completion</div><div class="text-text-secondary">Video views, watch depth, story completion and exits.</div></div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-6 reveal"><div class="text-accent-2 uppercase tracking-[.18em] text-sm mb-3">Activity</div><div class="text-xl font-semibold mb-2">Posting Cadence</div><div class="text-text-secondary">Number of posts, format mix, and frequency by platform.</div></div></div></div></div>
+
+  <div class="slide slide-9" data-slide="9"><div class="gradient-mesh"><div class="blob" style="width:360px;height:360px;top:-80px;left:-60px;background:var(--color-accent-2);opacity:.08"></div><div class="blob" style="width:280px;height:280px;bottom:-70px;right:-60px;background:var(--color-accent-1);opacity:.07"></div></div><div class="content"><h2 class="font-display text-[clamp(2rem,4vw,3rem)] font-bold mb-6 reveal">How Metrics Are Collected</h2><div class="grid grid-cols-2 gap-8"><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-8 reveal"><div class="text-sm uppercase tracking-[.18em] text-accent-2 mb-4">Manual collection</div><ul class="space-y-4 text-lg text-text-secondary"><li class="reveal">• Native platform insights for accuracy checks and spot analysis.</li><li class="reveal">• Manual coding for sentiment quality control and nuanced categories.</li><li class="reveal">• Useful for smaller scopes, audits, and verification.</li></ul></div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-8 reveal"><div class="text-sm uppercase tracking-[.18em] text-accent-2 mb-4">Tool-based collection</div><ul class="space-y-4 text-lg text-text-secondary"><li class="reveal">• Emplifi for performance metrics.</li><li class="reveal">• Talkwalker for monitoring, listening, and sentiment.</li><li class="reveal">• Best for recurring reports, cross-platform dashboards, and trend tracking.</li></ul></div></div><div class="mt-6 bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-5 reveal text-lg text-text-secondary">Best practice: automate collection where possible, then review outputs manually before reporting them to clients or leadership.</div></div></div>
+
+  <div class="slide slide-10" data-slide="10"><div class="gradient-mesh"><div class="blob" style="width:350px;height:350px;top:-80px;right:-60px;background:var(--color-accent-1);opacity:.08"></div><div class="blob" style="width:250px;height:250px;bottom:-50px;left:-40px;background:var(--color-accent-3);opacity:.06"></div></div><div class="content"><h2 class="font-display text-[clamp(2rem,4vw,3rem)] font-bold mb-6 reveal">Monthly Deck Skeleton</h2><div class="grid grid-cols-2 gap-x-10 gap-y-5 text-lg"><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-5 reveal">1. Methodology and tools used</div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-5 reveal">2. Executive summary: performance + sentiment highlights</div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-5 reveal">3. Performance scorecard</div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-5 reveal">4. Performance per each platform</div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-5 reveal">5. Followers, posting cadence, top posts, content pillars</div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-5 reveal">6. Media views and trend analysis</div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-5 reveal">7. Listening scorecard and sentiment sampling</div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-5 reveal">8. Community overview and recommendations</div></div></div></div>
+
+  <div class="slide slide-11" data-slide="11"><div class="gradient-mesh"><div class="blob" style="width:420px;height:420px;top:-100px;right:-80px;background:var(--color-accent-1);opacity:.11"></div><div class="blob" style="width:260px;height:260px;bottom:-60px;left:-50px;background:var(--color-accent-2);opacity:.08"></div></div><canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1"></canvas><div class="content"><h2 class="font-display text-[clamp(2rem,4vw,3rem)] font-bold mb-6 reveal">What a Social Media Analyst Does</h2><div class="grid grid-cols-3 gap-6"><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-7 reveal card-hover transition"><div class="text-4xl mb-4">🧮</div><div class="text-xl font-semibold mb-3">Collects data</div><div class="text-text-secondary">Pulls account, content, and audience data from tools and native insights.</div></div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-7 reveal card-hover transition"><div class="text-4xl mb-4">🔎</div><div class="text-xl font-semibold mb-3">Interprets patterns</div><div class="text-text-secondary">Finds what is changing, what is working, and what it means for the brand.</div></div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-7 reveal card-hover transition"><div class="text-4xl mb-4">💡</div><div class="text-xl font-semibold mb-3">Recommends action</div><div class="text-text-secondary">Turns evidence into next-step guidance for content, community, and strategy.</div></div></div><div class="mt-8 bg-glass-bg backdrop-blur-xl border border-glass-border rounded-2xl p-6 text-lg text-text-secondary reveal">A strong analyst does more than count likes and shares. They connect social data to business questions, content quality, audience understanding, and future planning.</div></div></div>
+
+  <div class="slide slide-12" data-slide="12"><div class="gradient-mesh"><div class="blob" style="width:350px;height:350px;top:-70px;left:-60px;background:var(--color-accent-2);opacity:.07"></div><div class="blob" style="width:260px;height:260px;bottom:-70px;right:-50px;background:var(--color-accent-3);opacity:.07"></div></div><div class="content"><h2 class="font-display text-[clamp(2rem,4vw,3rem)] font-bold mb-6 reveal">Skills for Junior Analysts</h2><div class="grid grid-cols-2 gap-8"><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-8 reveal"><div class="text-sm uppercase tracking-[.18em] text-accent-2 mb-4">Soft skills</div><ul class="space-y-4 text-lg text-text-secondary"><li class="reveal">• Focus and discipline</li><li class="reveal">• Curiosity and analytical thinking</li><li class="reveal">• Attention to detail</li><li class="reveal">• Clear communication and storytelling</li></ul></div><div class="bg-glass-bg backdrop-blur-xl border border-glass-border rounded-3xl p-8 reveal"><div class="text-sm uppercase tracking-[.18em] text-accent-2 mb-4">Technical skills</div><ul class="space-y-4 text-lg text-text-secondary"><li class="reveal">• Clean and manipulate data</li><li class="reveal">• Build charts and dashboards</li><li class="reveal">• Structure clear reporting decks</li><li class="reveal">• Work with analytics and listening tools</li></ul></div></div></div></div>
+
+  <div class="slide slide-13" data-slide="13"><div class="gradient-mesh"><div class="blob" style="width:420px;height:420px;top:-120px;right:-70px;background:var(--color-accent-1);opacity:.12"></div><div class="blob" style="width:300px;height:300px;bottom:-90px;left:-40px;background:var(--color-accent-2);opacity:.08"></div><div class="blob" style="width:220px;height:220px;top:45%;left:20%;background:var(--color-accent-3);opacity:.08"></div></div><canvas class="particle-canvas" style="position:absolute;inset:0;z-index:1"></canvas><div class="content text-center"><div class="text-[110px] mb-5 animate-[float_3s_ease-in-out_infinite] reveal">🚀</div><h2 class="font-display text-[clamp(2.6rem,6vw,5rem)] font-black bg-linear-to-br from-accent-1 via-accent-2 to-accent-3 bg-clip-text text-transparent tracking-tight mb-4 reveal">Use the Framework Consistently</h2><p class="text-[clamp(1rem,1.5vw,1.3rem)] text-text-secondary max-w-3xl mx-auto reveal">The goal is the same in client work and onboarding: connect data, insights, and recommendations in one clear operating model.</p></div></div>
+
+</div>
+<div class="nav-controls"><button class="nav-btn" onclick="changeSlide(-1)" aria-label="Previous slide">&#8249;</button><div class="slide-dots" id="dots"></div><button class="nav-btn" onclick="changeSlide(1)" aria-label="Next slide">&#8250;</button><span class="slide-counter" id="counter">1 / 13</span></div>
+<script>
+let current = 1;
+const total = document.querySelectorAll('.slide').length;
+const dotsContainer = document.getElementById('dots');
+const counter = document.getElementById('counter');
+for (let i = 1; i <= total; i++) { const dot = document.createElement('div'); dot.className = 'dot' + (i === 1 ? ' active' : ''); dot.onclick = () => goToSlide(i); dotsContainer.appendChild(dot); }
+function goToSlide(n) { const prev = document.querySelector('.slide.active'); const next = document.querySelector(`.slide[data-slide="${n}"]`); if (prev) prev.classList.remove('active'); if (next) { next.classList.add('active'); animateSlide(next); } current = n; updateNav(); }
+function changeSlide(dir) { let next = current + dir; if (next < 1) next = total; if (next > total) next = 1; goToSlide(next); }
+function updateNav() { document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i + 1 === current)); counter.textContent = current + ' / ' + total; }
+document.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); changeSlide(1); } if (e.key === 'ArrowLeft') { e.preventDefault(); changeSlide(-1); } });
+let touchStartX = 0;
+document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+document.addEventListener('touchend', (e) => { const diff = touchStartX - e.changedTouches[0].clientX; if (Math.abs(diff) > 50) changeSlide(diff > 0 ? 1 : -1); });
+function animateSlide(slide) { slide.querySelectorAll('.reveal').forEach((el, i) => { el.style.transition = 'none'; el.style.opacity = '0'; el.style.transform = 'translateY(20px)'; el.offsetHeight; const delay = i * 0.08; el.style.transition = `opacity 0.35s ease ${delay}s, transform 0.35s ease ${delay}s`; el.style.opacity = '1'; el.style.transform = 'translateY(0px)'; }); }
+document.addEventListener('mousemove', (e) => { const spotlight = document.querySelector('.mouse-spotlight'); if (spotlight) spotlight.style.background = `radial-gradient(600px circle at ${e.clientX}px ${e.clientY}px, rgba(124,58,237,0.06), transparent 40%)`; });
+window.initParticles = function(canvas, options) { if (!canvas) return; const ctx = canvas.getContext('2d'); canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; const interactive = options.interactive !== false; const count = options.count || (interactive ? 55 : 18); let mx = -1000, my = -1000; const particles = Array.from({ length: count }, () => ({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3, size: Math.random() * 2.5 + 0.8, alpha: Math.random() * 0.35 + 0.1 })); if (interactive) { canvas.addEventListener('mousemove', (e) => { const rect = canvas.getBoundingClientRect(); mx = e.clientX - rect.left; my = e.clientY - rect.top; }); canvas.addEventListener('mouseleave', () => { mx = -1000; my = -1000; }); } (function animate() { ctx.clearRect(0, 0, canvas.width, canvas.height); particles.forEach(p => { if (interactive) { const dx = p.x - mx, dy = p.y - my, dist = Math.sqrt(dx * dx + dy * dy); if (dist < 120) { const force = (120 - dist) / 120 * 2; p.vx += (dx / (dist || 1)) * force * 0.1; p.vy += (dy / (dist || 1)) * force * 0.1; } } p.vx *= 0.98; p.vy *= 0.98; p.x += p.vx; p.y += p.vy; if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0; if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fillStyle = `rgba(124,58,237,${p.alpha})`; ctx.fill(); }); requestAnimationFrame(animate); })(); };
+document.querySelectorAll('.particle-canvas').forEach(c => window.initParticles(c, { interactive: true, count: 55 }));
+document.querySelectorAll('.particle-canvas-ambient').forEach(c => window.initParticles(c, { interactive: false, count: 18 }));
+animateSlide(document.querySelector('.slide.active'));
+</script>
+</body>
+</html>
